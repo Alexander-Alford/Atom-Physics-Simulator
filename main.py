@@ -12,13 +12,31 @@ coulombconst = 8.9875517923e9 # kg⋅m3⋅s^2/C^2
 
 time = 0.0
 
+class Particle:
+
+    def __init__(self, velocity, mass, charge, position, color, radius):
+        self.velocity = vector(velocity[0], velocity[1], velocity[2])
+        self.position = vector(position[0], position[1], position[2])
+        self.mass = mass
+        self.charge = charge
+        self.sphere = sphere(pos = self.position, radius = radius, color = color)
+
+    def updatePos(self):
+        self.position += (self.velocity*delta_t*scalefactor)
+        self.sphere.pos = self.position
+
+    def applyForce(self, other):
+        force = getElectroForce(self.charge, other.charge, 
+                                getDistance(self.position, other.position))
+        self.velocity += 
+
+
+particlelist = []
+
+
 #calulators
 def getDistance(pos_1, pos_2):
-    x_diff_sqr = (pos_1[0] - pos_2[0]) ** 2
-    y_diff_sqr = (pos_1[1] - pos_2[1]) ** 2
-    z_diff_sqr = (pos_1[2] - pos_2[2]) ** 2
-
-    return math.sqrt(x_diff_sqr + y_diff_sqr + z_diff_sqr)
+    return mag(pos_1 - pos_2)
 
 def getElectroForce(q1, q2, rad):
     return q1*q2*coulombconst/(rad ** 2)
@@ -26,11 +44,19 @@ def getElectroForce(q1, q2, rad):
 def addForce():
     return 
 
-particleone = sphere(pos = (vector(-2,0,0)), radius = 1, color = color.yellow)
-particletwo = sphere(pos = (vector(2,0,0)), radius = 0.1, color = color.red)
+particlelist.append(Particle([0,0,0], prot_mass, elem_charge, [-2,0,0], color.purple, 1))
+particlelist.append(Particle([0,0,0], elec_mass, elem_charge, [2,0,0], color.yellow, 0.1))
+
 
 
 while time < 1:
     
+    for particle in particlelist:
+        particle.updatePos(self)
+
+
     
     time = time + delta_t
+
+del particleone
+del particletwo    
