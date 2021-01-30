@@ -2,7 +2,7 @@ from vpython import *
 import math
 
 #constants
-delta_t = 1e-4 # s
+delta_t = 1e-13 # s
 min_dist = 1e-15 # m
 elec_mass = 9.1093837015e-31 # kg 
 prot_mass = 1.6726219e-27 # kg
@@ -28,7 +28,9 @@ class Particle:
     def applyForce(self, other):
         force = getElectroForce(self.charge, other.charge, 
                                 getDistance(self.position, other.position))
-        self.velocity += 
+
+        self.velocity += (norm(self.position - other.position)*force*delta_t)/self.mass
+        other.velocity += (norm(other.position - self.position)*force*delta_t)/other.mass
 
 
 particlelist = []
@@ -44,19 +46,30 @@ def getElectroForce(q1, q2, rad):
 def addForce():
     return 
 
-particlelist.append(Particle([0,0,0], prot_mass, elem_charge, [-2,0,0], color.purple, 1))
-particlelist.append(Particle([0,0,0], elec_mass, elem_charge, [2,0,0], color.yellow, 0.1))
+
+
+primescene = canvas(width = 800, height = 800)
+
+
+particlelist.append(Particle([0,0,0], prot_mass, elem_charge, [-0.001,0,0], color.purple, 0.0005))
+particlelist.append(Particle([0,0.00001,0], elec_mass, -elem_charge, [0.001,0,0], color.yellow, 0.0005))
 
 
 
-while time < 1:
-    
-    for particle in particlelist:
-        particle.updatePos(self)
+while time < delta_t*10000:
+    rate(100)
+    for p in range(len(particlelist)):
+        p1 = p
+        p2 = p + 1
 
+        try:
+            particlelist[p].applyForce(particlelist[p2])    
+        except:
+            i = 0 
 
-    
+    particlelist[p].updatePos()         
+    print(particlelist[0].velocity)
     time = time + delta_t
 
-del particleone
-del particletwo    
+del particlelist
+ 
