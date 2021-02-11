@@ -6,18 +6,17 @@ import math
 elec_mass = 9.1093837015e-31 # kg 
 prot_mass = 1.6726219e-27 # kg
 elem_charge = 1.602176634e-19 # C
-coulombconst = 8.9875517923e9 # kg⋅m3⋅s^2/C^2
+coulombconst = 8.9875517923e9 # kg⋅m^3⋅s^2/C^2
 a_0 = 5.29177210903e-11 # Bohr radius in m
 
 
 #approximation constants
-delta_t = 1e-27 # s
+delta_t = 1e-18 # s
 min_dist = 1e-15 # m
-scalefactor = 1e15
 time = 0.0
-graph_radBin = a_0/5
-
-
+graph_radBin = a_0/10
+numRadHisto = 50
+total_r_samples = 1000
 
 class Particle:
 
@@ -29,7 +28,7 @@ class Particle:
         self.sphere = sphere(pos = self.position, radius = radius, color = color)
 
     def updatePos(self):
-        self.position += (self.velocity*delta_t*scalefactor)
+        self.position += (self.velocity*delta_t) 
         self.sphere.pos = self.position
 
  
@@ -41,6 +40,7 @@ particlelist = []
 run_flag = True
 electro_flag = True
 magnet_flag = False
+
 
 def electroCheck(self):
     global electro_flag
@@ -61,15 +61,45 @@ def pauseBut(self):
         self.text = "Run"
 
 #graphing
-distgraph = graph(width = 500, height = 300, xmin = 0, ymin = 0, xmax = 5, ymax = 1, title = "probability", xtitle = "Radius (a0)", ytitle = "relative probability", align = "left")
+distgraph = graph(width = 500, height = 300, xmin = 0, ymin = 0, xmax = 5, ymax = 1, title = "probability",
+                 xtitle = "Radius (a0)", ytitle = "relative probability", align = "left")
+
+r_histo = [*range(numRadHisto)]
+snapshot_rhisto = [*range(total_r_samples)]
+vrad = gvbars(color = color.red, delta = 0.1)
 
 hydOrbTheory = gcurve( color=color.blue )
 for r in range(0, 500, 1):
     hydOrbTheory.plot( (r/100), (4)*((r/100) ** 2)*exp(-2*(r/100)) )
 
+for i in range(len(r_histo)):
+    r_histo[i] = 0.0
 
-print((4/a_0 ** 2)*((100/100) ** 2)*exp(-2*(100/100)/a_0))
-print(-2*(100/100)/a_0)
+for i in range(len(snapshot_rhisto)):
+    snapshot_rhisto[i] = 0
+
+def snap_radius(dist):
+    bin = int(dist/graph_radBin)
+
+    if (bin < 50):
+        r_histo[bin] += 10/total_r_samples
+        snapshot_rhisto.insert(0, bin)
+
+        if (snapshot_rhisto[total_r_samples - 1] > 0): 
+            r_histo[snapshot_rhisto[total_r_samples - 1]] -= 10/total_r_samples
+
+        snapshot_rhisto.pop(total_r_samples - 1)
+ 
+
+def graph_radius():
+    
+    accum = []
+
+    for r in range(numRadHisto):
+        accum.append([r/10, r_histo[r]])
+            
+           
+    vrad.data = accum
 
 #calulators
 def getDistance(pos_1, pos_2):
@@ -103,13 +133,13 @@ checkbox(text = "Magnetic Force", checked = False, bind = electroCheck)
 #sphere(pos=vector(1.29e-11,0,0), color=color.red, radius=1e-12)
 
 particlelist.append(Particle([0,0,0], prot_mass, elem_charge, [0,0,0], color.purple, 1e-12))
-particlelist.append(Particle([0,7.18e-2,0], elec_mass, -elem_charge, [5.29e-11,0,0], color.yellow, 1e-12))
+particlelist.append(Particle([0,2.18e6,0], elec_mass, -elem_charge, [a_0,0,0], color.yellow, 1e-12))
 
 
 
 while True:
     if run_flag:    
-        rate(2000)
+        rate(200)
         
         if electro_flag == True:
             applyForce(particlelist)
@@ -117,7 +147,15 @@ while True:
         for p in range(len(particlelist)):
             particlelist[p].updatePos()
         
-        time = time + delta_t
+    #print("velocity ", mag(particlelist[1].velocity), " m/s")
+    #print("distance ", getDistance(particlelist[1].position, particlelist[0].position), " m")
+    #print("position ", particlelist[1].position)
+    #print("force ", getElectroForce(particlelist[0].charge, particlelist[1].charge, getDistance(particlelist[0].position, particlelist[1].position)))
+    snap_radius(getDistance(particlelist[1].position, particlelist[0].position))
+
+    graph_radius()
+
+    time = time + delta_t
 
 del particlelist
  
