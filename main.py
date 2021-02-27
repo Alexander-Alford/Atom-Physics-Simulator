@@ -1,5 +1,6 @@
 from vpython import *
 import math
+import random
 
 
 #mathematical constants
@@ -8,12 +9,13 @@ prot_mass = 1.6726219e-27 # kg
 elem_charge = 1.602176634e-19 # C
 coulombconst = 8.9875517923e9 # kg⋅m^3⋅s^2/C^2
 a_0 = 5.29177210903e-11 # Bohr radius in m
-
+v_light = 2.99792458e8 # m/s
 
 #approximation constants
-delta_t = 1e-18 # s
+delta_t = 1e-19 # s
 min_dist = 1e-15 # m
 time = 0.0
+
 graph_radBin = a_0/10
 numRadHisto = 50
 total_r_samples = 1000
@@ -40,7 +42,7 @@ particlelist = []
 run_flag = True
 electro_flag = True
 magnet_flag = False
-
+selfinteractflag = False
 
 def electroCheck(self):
     global electro_flag
@@ -49,6 +51,14 @@ def electroCheck(self):
         electro_flag = False
     else:
         electro_flag = True
+
+def selfInteractCheck(self):
+    global selfinteractflag
+
+    if selfinteractflag == True:
+        selfinteractflag = False
+    else:
+        selfinteractflag = True
 
 def pauseBut(self):
     global run_flag
@@ -79,7 +89,7 @@ for i in range(len(snapshot_rhisto)):
     snapshot_rhisto[i] = 0
 
 def snap_radius(dist):
-    bin = int(dist/graph_radBin)
+    bin = int(round(dist/graph_radBin))
 
     if (bin < 50):
         r_histo[bin] += 10/total_r_samples
@@ -101,6 +111,50 @@ def graph_radius():
            
     vrad.data = accum
 
+#Utility
+def randSign():
+    test = random.random()
+
+    if(test < .50):
+        return 1
+    else:
+        return -1
+
+def genRandNormOrthVec(ref):
+    retvec = [0,0,0]
+    vecref = [ref.x, ref.y, ref.z]
+
+    numofzeros = 0
+
+    #print(ref)
+
+    for i in range(3):
+        if vecref[i] == 0:
+            numofzeros += 1
+
+    if numofzeros == 0:
+        retvec[0] = random.random()*randSign()
+        retvec[1] = random.random()*randSign()
+        retvec[2] = (-retvec[0]*vecref[0] - retvec[1]*vecref[1])/vecref[2]        
+    elif numofzeros == 1:
+        retvec[0] = random.random()*randSign()
+        
+        if vecref[1] == 0:
+            retvec[1] = random.random()*randSign()
+            retvec[2] = (-retvec[1]*vecref[1])/vecref[2]
+        else:
+            retvec[2] = random.random()*randSign()
+            retvec[1] = (-retvec[2]*vecref[2])/vecref[1]
+    elif numofzeros == 2:
+        for i in range(3):
+            if vecref[i] == 0:
+                retvec[i] = random.random()*randSign()
+            else:
+                retvec[i] = 0
+    
+    return norm(vec(retvec[0], retvec[1], retvec[2]))
+
+
 #calulators
 def getDistance(pos_1, pos_2):
     return mag(pos_1 - pos_2)
@@ -108,6 +162,24 @@ def getDistance(pos_1, pos_2):
 def getElectroForce(q1, q2, rad):
     return q1*q2*coulombconst/(rad ** 2)
 
+def getSelfForce(vel):
+    # magnitude of velocity has to remain the same
+    # calclulate inverse force that acts directly opposite of the velocity vector
+    # cant go light speed
+    # get randomized scalar vector that applies for perpendicular to velocity vector
+    
+    gamma = 1/sqrt( 1 - mag2(vel)/(v_light ** 2) ) #relativity factor from 1 to infinity
+
+    velinv = -1*vel*(1 - 1/gamma) # reduction in forward velocity
+
+    orthmag = sqrt( mag2(vel) - mag2( (vel + velinv) ) ) #magnitude of increase in orthogonal velocity 
+
+    #print("orthmag = " + str(orthmag) + ", vel " + str(mag(vel)) + ", gamma " + str(gamma) + ", inv " + str(mag(velinv)))
+
+    ret_vel = vel + velinv + genRandNormOrthVec(vel)*orthmag
+
+    return ret_vel
+    
 
 
 def addForce(force, p1, p2):
@@ -115,10 +187,17 @@ def addForce(force, p1, p2):
     p2.velocity += (norm(p2.position - p1.position)*force*delta_t)/p2.mass    
 
 def applyForce(plist):
+    global electro_flag
+    global selfinteractflag
+
     for p1 in range(len(plist)):
         for p2 in range(p1 + 1,len(plist)):
             if p2 <= len(plist):
-                addForce( getElectroForce(plist[p1].charge, plist[p2].charge, getDistance(plist[p1].position, plist[p2].position)), plist[p1], plist[p2])
+                if(electro_flag == True):
+                    addForce( getElectroForce(plist[p1].charge, plist[p2].charge, getDistance(plist[p1].position, plist[p2].position)), plist[p1], plist[p2])
+                if(selfinteractflag == True):
+                    plist[p1].velocity = getSelfForce(plist[p1].velocity)
+                   
 
 
 
@@ -128,7 +207,8 @@ primescene = canvas(title="Atomic Physics Simulator", width = 800, height = 800,
 #Button code. Try and revise later.
 button(text = "Pause", pos = primescene.title_anchor, bind = pauseBut)
 checkbox(text = "Electrostatic Force", bind = electroCheck, checked = True, id = 0)
-checkbox(text = "Magnetic Force", checked = False, bind = electroCheck)
+#checkbox(text = "Magnetic Force", checked = False)
+checkbox(text = "Particle Self interaction", checked = False, bind = selfInteractCheck)
 
 #sphere(pos=vector(1.29e-11,0,0), color=color.red, radius=1e-12)
 
@@ -137,9 +217,11 @@ particlelist.append(Particle([0,2.18e6,0], elec_mass, -elem_charge, [a_0,0,0], c
 
 
 
+
+
 while True:
     if run_flag:    
-        rate(200)
+        rate(2000)
         
         if electro_flag == True:
             applyForce(particlelist)
@@ -147,8 +229,8 @@ while True:
         for p in range(len(particlelist)):
             particlelist[p].updatePos()
         
-    #print("velocity ", mag(particlelist[1].velocity), " m/s")
-    #print("distance ", getDistance(particlelist[1].position, particlelist[0].position), " m")
+    #print("velocity ", mag(particlelist[1].velocity)/1e8, " m/s")
+    #print("distance ", getDistance(particlelist[1].position, particlelist[0].position)*10/a_0, " a_0 ", int(round(getDistance(particlelist[1].position, particlelist[0].position)*10/a_0)))
     #print("position ", particlelist[1].position)
     #print("force ", getElectroForce(particlelist[0].charge, particlelist[1].charge, getDistance(particlelist[0].position, particlelist[1].position)))
     snap_radius(getDistance(particlelist[1].position, particlelist[0].position))
@@ -157,5 +239,4 @@ while True:
 
     time = time + delta_t
 
-del particlelist
  
