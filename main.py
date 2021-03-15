@@ -42,7 +42,7 @@ particlelist = []
 run_flag = True
 electro_flag = True
 magnet_flag = False
-selfinteractflag = False
+#selfinteractflag = False
 
 def electroCheck(self):
     global electro_flag
@@ -52,6 +52,7 @@ def electroCheck(self):
     else:
         electro_flag = True
 
+'''
 def selfInteractCheck(self):
     global selfinteractflag
 
@@ -59,6 +60,7 @@ def selfInteractCheck(self):
         selfinteractflag = False
     else:
         selfinteractflag = True
+'''
 
 def pauseBut(self):
     global run_flag
@@ -74,8 +76,8 @@ def pauseBut(self):
 distgraph = graph(width = 500, height = 300, xmin = 0, ymin = 0, xmax = 5, ymax = 1, title = "probability",
                  xtitle = "Radius (a0)", ytitle = "relative probability", align = "left")
 
-r_histo = [*range(numRadHisto)]
-snapshot_rhisto = [*range(total_r_samples)]
+r_histo = list(range(numRadHisto))
+snapshot_rhisto = list(range(total_r_samples))
 vrad = gvbars(color = color.red, delta = 0.1)
 
 hydOrbTheory = gcurve( color=color.blue )
@@ -162,6 +164,7 @@ def getDistance(pos_1, pos_2):
 def getElectroForce(q1, q2, rad):
     return q1*q2*coulombconst/(rad ** 2)
 
+'''
 def getSelfForce(vel):
     # magnitude of velocity has to remain the same
     # calclulate inverse force that acts directly opposite of the velocity vector
@@ -179,7 +182,7 @@ def getSelfForce(vel):
     ret_vel = vel + velinv + genRandNormOrthVec(vel)*orthmag
 
     return ret_vel
-    
+'''    
 
 
 def addForce(force, p1, p2):
@@ -195,8 +198,8 @@ def applyForce(plist):
             if p2 <= len(plist):
                 if(electro_flag == True):
                     addForce( getElectroForce(plist[p1].charge, plist[p2].charge, getDistance(plist[p1].position, plist[p2].position)), plist[p1], plist[p2])
-                if(selfinteractflag == True):
-                    plist[p1].velocity = getSelfForce(plist[p1].velocity)
+                #if(selfinteractflag == True):
+                   # plist[p1].velocity = getSelfForce(plist[p1].velocity)
                    
 
 
@@ -208,7 +211,7 @@ primescene = canvas(title="Atomic Physics Simulator", width = 800, height = 800,
 button(text = "Pause", pos = primescene.title_anchor, bind = pauseBut)
 checkbox(text = "Electrostatic Force", bind = electroCheck, checked = True, id = 0)
 #checkbox(text = "Magnetic Force", checked = False)
-checkbox(text = "Particle Self interaction", checked = False, bind = selfInteractCheck)
+#checkbox(text = "Particle Self interaction", checked = False, bind = selfInteractCheck)
 
 #sphere(pos=vector(1.29e-11,0,0), color=color.red, radius=1e-12)
 
