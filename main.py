@@ -1,5 +1,5 @@
+GlowScript 3.1 VPython
 from vpython import *
-import math
 import random
 
 
@@ -19,6 +19,7 @@ time = 0.0
 graph_radBin = a_0/10
 numRadHisto = 50
 total_r_samples = 1000
+counter = 0
 
 class Particle:
 
@@ -62,56 +63,6 @@ def selfInteractCheck(self):
         selfinteractflag = True
 '''
 
-def pauseBut(self):
-    global run_flag
-
-    if not run_flag:
-        run_flag = True
-        self.text = "Pause"
-    else:
-        run_flag = False
-        self.text = "Run"
-
-#graphing
-distgraph = graph(width = 500, height = 300, xmin = 0, ymin = 0, xmax = 5, ymax = 1, title = "probability",
-                 xtitle = "Radius (a0)", ytitle = "relative probability", align = "left")
-
-r_histo = list(range(numRadHisto))
-snapshot_rhisto = list(range(total_r_samples))
-vrad = gvbars(color = color.red, delta = 0.1)
-
-hydOrbTheory = gcurve( color=color.blue )
-for r in range(0, 500, 1):
-    hydOrbTheory.plot( (r/100), (4)*((r/100) ** 2)*exp(-2*(r/100)) )
-
-for i in range(len(r_histo)):
-    r_histo[i] = 0.0
-
-for i in range(len(snapshot_rhisto)):
-    snapshot_rhisto[i] = 0
-
-def snap_radius(dist):
-    bin = int(round(dist/graph_radBin))
-
-    if (bin < 50):
-        r_histo[bin] += 10/total_r_samples
-        snapshot_rhisto.insert(0, bin)
-
-        if (snapshot_rhisto[total_r_samples - 1] > 0): 
-            r_histo[snapshot_rhisto[total_r_samples - 1]] -= 10/total_r_samples
-
-        snapshot_rhisto.pop(total_r_samples - 1)
- 
-
-def graph_radius():
-    
-    accum = []
-
-    for r in range(numRadHisto):
-        accum.append([r/10, r_histo[r]])
-            
-           
-    vrad.data = accum
 
 #Utility
 def randSign():
@@ -205,13 +156,80 @@ def applyForce(plist):
 
 
 
-primescene = canvas(title="Atomic Physics Simulator", width = 800, height = 800, center=vector(0,0,0), align = "left")
+primescene = canvas(title="<b>Atomic Physics Simulator</b>", width = 500, height = 500, center=vector(0,0,0), align = "none")
+primescene.userspin = False
+primescene.resizable = False
+#primescene.userpan = False
 
-#Button code. Try and revise later.
-button(text = "Pause", pos = primescene.title_anchor, bind = pauseBut)
+#Button code. 
+def resetBut():
+    primescene.autoscale = False
+    particlelist[0].position = vector(0,0,0)
+    particlelist[0].velocity = vector(0,0,0)
+    particlelist[1].position = vector(a_0,0,0)
+    particlelist[1].velocity = vector(0,2.18e6,0)
+    primescene.center = vector(0,0,0)
+    primescene.range = a_0*1.1
+    primescene.autoscale = True
+
+def pauseBut(self):
+    global run_flag
+
+    if run_flag == False:
+        run_flag = True
+        self.text = "Pause"
+    else:
+        run_flag = False
+        self.text = "Run"
+
+
+button(text = "Pause", pos = primescene.caption_anchor, bind = pauseBut)
+button(text = "Reset", pos = primescene.caption_anchor, bind = resetBut)
 checkbox(text = "Electrostatic Force", bind = electroCheck, checked = True, id = 0)
 #checkbox(text = "Magnetic Force", checked = False)
 #checkbox(text = "Particle Self interaction", checked = False, bind = selfInteractCheck)
+
+#graphing
+distgraph = graph(width = 500, height = 300, xmin = 0, ymin = 0, xmax = 5, ymax = 1, title = "probability",
+                 xtitle = "Radius (a0)", ytitle = "relative probability", align = "none")
+
+r_histo = list(range(numRadHisto))
+snapshot_rhisto = list(range(total_r_samples))
+vrad = gvbars(color = color.red, delta = 0.1)
+
+hydOrbTheory = gcurve( color=color.blue )
+for r in range(0, 500, 1):
+    hydOrbTheory.plot( (r/100), (4)*((r/100) ** 2)*exp(-2*(r/100)) )
+
+for i in range(len(r_histo)):
+    r_histo[i] = 0.0
+
+for i in range(len(snapshot_rhisto)):
+    snapshot_rhisto[i] = 0
+
+def snap_radius(dist):
+    bin = int(round(dist/graph_radBin))
+
+    if (bin < 50):
+        r_histo[bin] += 10/total_r_samples
+        snapshot_rhisto.insert(0, bin)
+
+        if (snapshot_rhisto[total_r_samples - 1] > 0): 
+            r_histo[snapshot_rhisto[total_r_samples - 1]] -= 10/total_r_samples
+
+        snapshot_rhisto.pop(total_r_samples - 1)
+ 
+
+def graph_radius():
+    
+    accum = []
+
+    for r in range(numRadHisto):
+        accum.append([r/10, r_histo[r]])
+            
+           
+    vrad.data = accum
+
 
 #sphere(pos=vector(1.29e-11,0,0), color=color.red, radius=1e-12)
 
@@ -223,8 +241,9 @@ particlelist.append(Particle([0,2.18e6,0], elec_mass, -elem_charge, [a_0,0,0], c
 
 
 while True:
-    if run_flag:    
-        rate(2000)
+    rate(2000)
+
+    if run_flag:     
         
         if electro_flag == True:
             applyForce(particlelist)
@@ -236,10 +255,11 @@ while True:
     #print("distance ", getDistance(particlelist[1].position, particlelist[0].position)*10/a_0, " a_0 ", int(round(getDistance(particlelist[1].position, particlelist[0].position)*10/a_0)))
     #print("position ", particlelist[1].position)
     #print("force ", getElectroForce(particlelist[0].charge, particlelist[1].charge, getDistance(particlelist[0].position, particlelist[1].position)))
-    snap_radius(getDistance(particlelist[1].position, particlelist[0].position))
+        if counter%40 == 0:
+            snap_radius(getDistance(particlelist[1].position, particlelist[0].position))
+        
+        counter = counter + 1
+        
+        graph_radius()
 
-    graph_radius()
-
-    time = time + delta_t
-
- 
+        time = time + delta_t
