@@ -4,12 +4,16 @@ import random
 
 
 #mathematical constants
+h = 6.62607015e-34 # J/Hz
+hbar = 1.054571817e-34 # J*s
 elec_mass = 9.1093837015e-31 # kg 
 prot_mass = 1.6726219e-27 # kg
 elem_charge = 1.602176634e-19 # C
-coulombconst = 8.9875517923e9 # kg⋅m^3⋅s^2/C^2
+coulombconst = 8.9875517923e9 # kg*m^3*s^2/C^2
 a_0 = 5.29177210903e-11 # Bohr radius in m
 v_light = 2.99792458e8 # m/s
+pi = 3.14159265358979323846
+
 
 #approximation constants
 delta_t = 1e-19 # s
@@ -28,7 +32,7 @@ class Particle:
         self.position = vector(position[0], position[1], position[2])
         self.mass = mass
         self.charge = charge
-        self.sphere = sphere(pos = self.position, radius = radius, color = color)
+        self.sphere = sphere(pos = self.position, radius = radius, color = color, make_trail=True, trail_type="points", retain=200, interval=10)
 
     def updatePos(self):
         self.position += (self.velocity*delta_t) 
@@ -151,8 +155,19 @@ def applyForce(plist):
                     addForce( getElectroForce(plist[p1].charge, plist[p2].charge, getDistance(plist[p1].position, plist[p2].position)), plist[p1], plist[p2])
                 #if(selfinteractflag == True):
                    # plist[p1].velocity = getSelfForce(plist[p1].velocity)
-                   
 
+#def setMinElecRad(n, k):
+#    if n == k:
+        
+
+#def setMaxElecVel(k, rad):
+#    return ((k*hbar)/(rad*elec_mass))
+    
+
+#def setPrincQuantNum(num):
+#    if num == 1:
+        
+    
 
 
 
@@ -162,7 +177,13 @@ primescene.resizable = False
 #primescene.userpan = False
 
 #Button code. 
+#def setPositions(n, k):
+    
+    
+
 def resetBut():
+    global coulombconst
+    coulombconst = 8.9875517923e9
     primescene.autoscale = False
     particlelist[0].position = vector(0,0,0)
     particlelist[0].velocity = vector(0,0,0)
@@ -171,6 +192,8 @@ def resetBut():
     primescene.center = vector(0,0,0)
     primescene.range = a_0*1.1
     primescene.autoscale = True
+    slide.value = coulombconst
+    
 
 def pauseBut(self):
     global run_flag
@@ -182,10 +205,17 @@ def pauseBut(self):
         run_flag = False
         self.text = "Run"
 
+def coulombSlider(self):
+    global coulombconst
+    coulombconst = self.value
+    
 
 button(text = "Pause", pos = primescene.caption_anchor, bind = pauseBut)
 button(text = "Reset", pos = primescene.caption_anchor, bind = resetBut)
-checkbox(text = "Electrostatic Force", bind = electroCheck, checked = True, id = 0)
+primescene.append_to_caption('\n')
+slide = slider(value = coulombconst, pos = primescene.caption_anchor, min=6e9, max=8e10, bind=coulombSlider, top=8, bottom=8)
+wtext(text="Attractive Force", pos = primescene.caption_anchor)
+#checkbox(text = "Electrostatic Force", bind = electroCheck, checked = True, id = 0)
 #checkbox(text = "Magnetic Force", checked = False)
 #checkbox(text = "Particle Self interaction", checked = False, bind = selfInteractCheck)
 
@@ -255,7 +285,7 @@ while True:
     #print("distance ", getDistance(particlelist[1].position, particlelist[0].position)*10/a_0, " a_0 ", int(round(getDistance(particlelist[1].position, particlelist[0].position)*10/a_0)))
     #print("position ", particlelist[1].position)
     #print("force ", getElectroForce(particlelist[0].charge, particlelist[1].charge, getDistance(particlelist[0].position, particlelist[1].position)))
-        if counter%40 == 0:
+        if counter%20 == 0:
             snap_radius(getDistance(particlelist[1].position, particlelist[0].position))
         
         counter = counter + 1
@@ -263,3 +293,5 @@ while True:
         graph_radius()
 
         time = time + delta_t
+
+ 
