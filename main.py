@@ -213,7 +213,7 @@ def coulombSlider(self):
 button(text = "Pause", pos = primescene.caption_anchor, bind = pauseBut)
 button(text = "Reset", pos = primescene.caption_anchor, bind = resetBut)
 primescene.append_to_caption('\n')
-slide = slider(value = coulombconst, pos = primescene.caption_anchor, min=6e9, max=8e10, bind=coulombSlider, top=8, bottom=8)
+slide = slider(value = coulombconst, pos = primescene.caption_anchor, min=6e9, max=8e10, bind=coulombSlider)
 wtext(text="Attractive Force", pos = primescene.caption_anchor)
 #checkbox(text = "Electrostatic Force", bind = electroCheck, checked = True, id = 0)
 #checkbox(text = "Magnetic Force", checked = False)
