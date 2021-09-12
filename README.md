@@ -1,4 +1,4 @@
-#Atomic Physics Simulator
+# Atomic Physics Simulator
 
 <img text-align="center" src="https://github.com/Alexander-Alford/Alexander-Alford.github.io/images/AtomSim_1.png">
 
