@@ -1,6 +1,5 @@
 # Atomic Physics Simulator
 
-![Image of Atom](atom.png)
 <p align="center">
   <img src="https://github.com/Alexander-Alford/Atom-Physics-Simulator/blob/main/atom.png" alt="Image of Atom"/>
 </p>
