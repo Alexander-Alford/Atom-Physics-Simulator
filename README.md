@@ -1,7 +1,7 @@
 # Atomic Physics Simulator
 
 <p align="center">
-  <img src="https://github.com/Alexander-Alford/Atom-Physics-Simulator/blob/main/atom.png" alt="Image of Atom"/>
+  <img max-width="400" src="https://github.com/Alexander-Alford/Atom-Physics-Simulator/blob/main/atom.png" alt="Image of Atom"/>
 </p>
 
 
